@@ -6,6 +6,7 @@ target 'HandlerIAP_Example' do
   pod 'HandlerIAP', :path => '../'
   pod 'SwiftyJSON'
   pod 'SVProgressHUD'
+  pod 'Adjust'
 
   target 'HandlerIAP_Tests' do
     inherit! :search_paths

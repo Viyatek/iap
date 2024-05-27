@@ -1,5 +1,9 @@
 PODS:
-  - HandlerIAP (0.1.0):
+  - Adjust (4.38.3):
+    - Adjust/Core (= 4.38.3)
+  - Adjust/Core (4.38.3)
+  - HandlerIAP (0.1.1):
+    - Adjust
     - SVProgressHUD
     - SwiftyJSON
   - SVProgressHUD (2.3.1):
@@ -8,12 +12,14 @@ PODS:
   - SwiftyJSON (5.0.2)
 
 DEPENDENCIES:
+  - Adjust
   - HandlerIAP (from `../`)
   - SVProgressHUD
   - SwiftyJSON
 
 SPEC REPOS:
   trunk:
+    - Adjust
     - SVProgressHUD
     - SwiftyJSON
 
@@ -22,10 +28,11 @@ EXTERNAL SOURCES:
     :path: "../"
 
 SPEC CHECKSUMS:
-  HandlerIAP: eab7ec89e791394bffedd5c17d54b4ccc1c7943d
+  Adjust: f446e1a51f7f07ef1c2d0267e079d5a83aed21bb
+  HandlerIAP: 0bb0933688c14f25b2d19ad07a36516d49b6223d
   SVProgressHUD: 4837c74bdfe2e51e8821c397825996a8d7de6e22
   SwiftyJSON: f5b1bf1cd8dd53cd25887ac0eabcfd92301c6a5a
 
-PODFILE CHECKSUM: 41311d7c8dca3dcf5743bab8c70b2bca17e9aa2c
+PODFILE CHECKSUM: 804d0b177bbf0a445b314d582e8bf7c27c33eee8
 
 COCOAPODS: 1.15.2

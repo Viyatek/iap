@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'HandlerIAP'
-  s.version          = '0.1.0'
+  s.version          = '0.1.1'
   s.summary          = 'In App Purchase Handler for iOS app'
 
 # This description is used to generate tags and improve search results.
@@ -33,6 +33,7 @@ Pod::Spec.new do |s|
   s.source_files = 'HandlerIAP/Classes/**/*'
   s.dependency 'SwiftyJSON'
   s.dependency 'SVProgressHUD'
+  s.dependency 'Adjust'
   # s.resource_bundles = {
   #   'HandlerIAP' => ['HandlerIAP/Assets/*.png']
   # }
