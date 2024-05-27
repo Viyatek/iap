@@ -38,3 +38,6 @@ Carthage/Build
 # Ignore internal files
 HandlerIAP/Classes/Internal/
 
+MyIapHandler/Classes/Internal/
+HandleIAPr/Classes/Internal/
+HandlerIAP/Classes/Internal/
