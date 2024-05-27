@@ -34,3 +34,7 @@ Carthage/Build
 # `pod install` in .travis.yml
 #
 # Pods/
+
+# Ignore internal files
+HandlerIAP/Classes/Internal/
+
