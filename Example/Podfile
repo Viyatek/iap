@@ -1,9 +1,11 @@
 use_frameworks!
 
-platform :ios, '10.0'
+platform :ios, '14.0'
 
 target 'HandlerIAP_Example' do
   pod 'HandlerIAP', :path => '../'
+  pod 'SwiftyJSON'
+  pod 'SVProgressHUD'
 
   target 'HandlerIAP_Tests' do
     inherit! :search_paths

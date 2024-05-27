@@ -1,0 +1,31 @@
+PODS:
+  - HandlerIAP (0.1.0):
+    - SVProgressHUD
+    - SwiftyJSON
+  - SVProgressHUD (2.3.1):
+    - SVProgressHUD/Core (= 2.3.1)
+  - SVProgressHUD/Core (2.3.1)
+  - SwiftyJSON (5.0.2)
+
+DEPENDENCIES:
+  - HandlerIAP (from `../`)
+  - SVProgressHUD
+  - SwiftyJSON
+
+SPEC REPOS:
+  trunk:
+    - SVProgressHUD
+    - SwiftyJSON
+
+EXTERNAL SOURCES:
+  HandlerIAP:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  HandlerIAP: eab7ec89e791394bffedd5c17d54b4ccc1c7943d
+  SVProgressHUD: 4837c74bdfe2e51e8821c397825996a8d7de6e22
+  SwiftyJSON: f5b1bf1cd8dd53cd25887ac0eabcfd92301c6a5a
+
+PODFILE CHECKSUM: 41311d7c8dca3dcf5743bab8c70b2bca17e9aa2c
+
+COCOAPODS: 1.15.2
