@@ -91,7 +91,7 @@ extension IAPHelper {
     }
     
     //MARK: Parse Receipt
-    private func parseReceipt(_ json : Dictionary<String, Any>) {
+    public func parseReceipt(_ json : Dictionary<String, Any>) {
         print("Inside parseReceipt")
         //guard let json = json else{return}
         // It's the most simple way to get latest expiration date. Consider this code as for learning purposes. Do not use current code in production apps.
@@ -160,7 +160,7 @@ extension IAPHelper {
     }
     
     //MARK: CleanUp Refesh Receipt Blocks
-    private func cleanUpRefeshReceiptBlocks() {
+    public func cleanUpRefeshReceiptBlocks() {
         self.refreshSubscriptionSuccessBlock = nil
         self.refreshSubscriptionFailureBlock = nil
     }

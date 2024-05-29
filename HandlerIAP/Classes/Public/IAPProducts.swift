@@ -14,7 +14,7 @@ public struct IAPProducts {
 
     
     
-    private static var productIdentifiers: Set<ProductIdentifier> = {
+    public static var productIdentifiers: Set<ProductIdentifier> = {
     
         return createIdentifiers()
 
