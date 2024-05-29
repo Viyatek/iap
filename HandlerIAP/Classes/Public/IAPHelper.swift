@@ -195,7 +195,7 @@ extension IAPHelper: SKPaymentTransactionObserver {
         buySuccessCompletion(identifier: transaction.payment.productIdentifier) { isLifetime in
             if isLifetime {
                 print("this is a life time purchase")
-                AUD.setEncyriptedValue(key: AUD.is_lifetime_member, value: true)
+                AUD.set(key: AUD.is_lifetime_member, value: true)
             }
         }
         
@@ -297,7 +297,7 @@ extension IAPHelper: SKPaymentTransactionObserver {
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         let tomorrow = Date().addingTimeInterval(TimeInterval(86400))
         let tomorrowString = "\(formatter.string(from: tomorrow)) Etc/GMT"
-        AUD.setEncyriptedValue(key: AUD.SUBSCRIPTION_EXPIRATION_DATE, value: tomorrowString)
+        AUD.set(key: AUD.SUBSCRIPTION_EXPIRATION_DATE, value: tomorrowString)
     }
     
     func restoreSuccessCompletion(identifier: String){

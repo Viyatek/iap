@@ -37,14 +37,14 @@ extension IAPHelper {
         if let productId = productId {
             if productId.contains("lifetime") {
                 print("this is a life time purchase")
-                AUD.setEncyriptedValue(key: AUD.is_lifetime_member, value: true)
-                AUD.setEncyriptedValue(key: AUD.IS_PRO_MEMBER, value: true)
+                AUD.set(key: AUD.is_lifetime_member, value: true)
+                AUD.set(key: AUD.IS_PRO_MEMBER, value: true)
             } else {
                 print("product id issss: \(productId)")
                 //MARK: Check is user lifetime member,
-                if !AUD.getEncyriptedBool(key: AUD.is_lifetime_member)! {
+                if !AUD.getBool(key: AUD.is_lifetime_member)! {
                     //Date Check
-                    guard let expDateStr = AUD.getEncyriptedString(key: AUD.SUBSCRIPTION_EXPIRATION_DATE) else{
+                    guard let expDateStr = AUD.getString(key: AUD.SUBSCRIPTION_EXPIRATION_DATE) else{
                         assert(false)
                         return
                     }
@@ -63,19 +63,19 @@ extension IAPHelper {
                         //print("Setting user property: \(property)")
                         let property = "premium"
                         //Analytics.setUserProperty(property, forName: "subscriber_type")
-                        /*if property != UDH.getEncyriptedString(key: UDH.SUBSCRIPTION_TYPE)! {
+                        /*if property != UDH.getString(key: UDH.SUBSCRIPTION_TYPE)! {
                             Analytics.setUserProperty(property, forName: "user_status")
                         }*/
                         Analytics.setUserProperty(property, forName: "user_status")
                         
-                        AUD.setEncyriptedValue(key: AUD.SUBSCRIPTION_TYPE, value: property)
+                        AUD.set(key: AUD.SUBSCRIPTION_TYPE, value: property)
                         
                         //Set Localized Title for future use
                         setLocalizedTitleForFutureUse(productId: productId)
                         
                     } else {
                         //Grace Period
-                        guard let graceExpDateStr = AUD.getEncyriptedString(key: AUD.GRACE_EXPIRATION_DATE) else{
+                        guard let graceExpDateStr = AUD.getString(key: AUD.GRACE_EXPIRATION_DATE) else{
                             assert(false)
                             return
                         }
@@ -91,11 +91,11 @@ extension IAPHelper {
                             //let property = "grace_\(productId)"
                             //Analytics.setUserProperty(property, forName: "subscriber_type")
                             let property = "ex_premium"
-                            /*if property != UDH.getEncyriptedString(key: UDH.SUBSCRIPTION_TYPE)! {
+                            /*if property != UDH.getString(key: UDH.SUBSCRIPTION_TYPE)! {
                                 Analytics.setUserProperty(property, forName: "user_status")
                             }*/
                             Analytics.setUserProperty(property, forName: "user_status")
-                            AUD.setEncyriptedValue(key: AUD.SUBSCRIPTION_TYPE, value: property)
+                            AUD.set(key: AUD.SUBSCRIPTION_TYPE, value: property)
                             
                             //Set Localized Title for future use
                             setLocalizedTitleForFutureUse(productId: productId)
@@ -126,11 +126,11 @@ extension IAPHelper {
                             let property = "ex_premium"
                             print("Setting user property: \(property)")
                             //Analytics.setUserProperty(property, forName: "subscriber_type")
-                            /*if property != UDH.getEncyriptedString(key: UDH.SUBSCRIPTION_TYPE)! {
+                            /*if property != UDH.getString(key: UDH.SUBSCRIPTION_TYPE)! {
                                 Analytics.setUserProperty(property, forName: "user_status")
                             }*/
                             Analytics.setUserProperty(property, forName: "user_status")
-                            AUD.setEncyriptedValue(key: AUD.SUBSCRIPTION_TYPE, value: property)
+                            AUD.set(key: AUD.SUBSCRIPTION_TYPE, value: property)
                             
                             //Set Localized Title for future use
                             setLocalizedTitleForFutureUse(productId: productId)
@@ -138,7 +138,7 @@ extension IAPHelper {
                     }
                     
                     //If Refunded Switch To Basic
-                    let refunded = AUD.getEncyriptedInt(key: AUD.SUBSCRIPTION_REFUNDED)
+                    let refunded = AUD.getInt(key: AUD.SUBSCRIPTION_REFUNDED)
                     if refunded == 1 {
                         
                         print("Handling subscription. Switching to basic because refunded!")
@@ -150,11 +150,11 @@ extension IAPHelper {
                         //let property = "refunded_\(productId)"
                         //Analytics.setUserProperty(property, forName: "subscriber_type")
                         let property = "ex_premium"//"ex_\(productId)"
-                        /*if property != UDH.getEncyriptedString(key: UDH.SUBSCRIPTION_TYPE)! {
+                        /*if property != UDH.getString(key: UDH.SUBSCRIPTION_TYPE)! {
                             Analytics.setUserProperty(property, forName: "user_status")
                         }*/
                         Analytics.setUserProperty(property, forName: "user_status")
-                        AUD.setEncyriptedValue(key: AUD.SUBSCRIPTION_TYPE, value: property)
+                        AUD.set(key: AUD.SUBSCRIPTION_TYPE, value: property)
                         
                         //Set Localized Title for future use
                         setLocalizedTitleForFutureUse(productId: productId)
@@ -169,10 +169,10 @@ extension IAPHelper {
     static func switchToPremium() {
         print("SWITCHING TO PREMIUM")
 
-        if !AUD.getEncyriptedBool(key: AUD.IS_PRO_MEMBER)! {
+        if !AUD.getBool(key: AUD.IS_PRO_MEMBER)! {
             let property = "premium"
-            AUD.setEncyriptedValue(key: AUD.SUBSCRIPTION_TYPE, value: property)
-            AUD.setEncyriptedValue(key: AUD.IS_PRO_MEMBER, value: true)
+            AUD.set(key: AUD.SUBSCRIPTION_TYPE, value: property)
+            AUD.set(key: AUD.IS_PRO_MEMBER, value: true)
             
             Analytics.setUserProperty(property, forName: "user_status")
         }
@@ -183,10 +183,10 @@ extension IAPHelper {
     static func switchToBasic() {
         print("SWITCHING TO BASIC")
 
-        if AUD.getEncyriptedBool(key: AUD.IS_PRO_MEMBER)! {
+        if AUD.getBool(key: AUD.IS_PRO_MEMBER)! {
             let property = "free"
-            AUD.setEncyriptedValue(key: AUD.SUBSCRIPTION_TYPE, value: property)
-            AUD.setEncyriptedValue(key: AUD.IS_PRO_MEMBER, value: false)
+            AUD.set(key: AUD.SUBSCRIPTION_TYPE, value: property)
+            AUD.set(key: AUD.IS_PRO_MEMBER, value: false)
             
             Analytics.setUserProperty(property, forName: "user_status")
         }
@@ -205,7 +205,7 @@ extension IAPHelper {
             }).first
             
             let plan_type = subscribedProduct?.subscriptionPeriod?.asString()
-            AUD.setEncyriptedValue(key: AUD.SUBSCRIPTION_NAME, value: subscribedProduct?.localizedTitle ?? "")
+            AUD.set(key: AUD.SUBSCRIPTION_NAME, value: subscribedProduct?.localizedTitle ?? "")
             AUD.set(key: AUD.price_of_subscribed_product, value: subscribedProduct?.price.doubleValue ?? 0.5)
             AUD.set(key: AUD.plan_type_of_subscribed_product, value: plan_type ?? "")
         }

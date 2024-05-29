@@ -121,14 +121,14 @@ extension IAPHelper {
                 print("=====")
                 print("Writing Expiration Date: \(expireDateStr)" )
                 //Write to Prefs
-                AUD.setEncyriptedValue(key: AUD.SUBSCRIPTION_EXPIRATION_DATE, value: expireDateStr)
+                AUD.set(key: AUD.SUBSCRIPTION_EXPIRATION_DATE, value: expireDateStr)
                 
                 //Check If Refunded
                 if let _ = receipt["cancellation_date"] {
                     print("Writing SUBSCRIPTION_REFUNDED = 1")
-                    AUD.setEncyriptedValue(key: AUD.SUBSCRIPTION_REFUNDED, value: 1)
+                    AUD.set(key: AUD.SUBSCRIPTION_REFUNDED, value: 1)
                 } else {
-                    AUD.setEncyriptedValue(key: AUD.SUBSCRIPTION_REFUNDED, value: 0)
+                    AUD.set(key: AUD.SUBSCRIPTION_REFUNDED, value: 0)
                 }
                 
                 //Save productId
@@ -137,8 +137,8 @@ extension IAPHelper {
             
             let myProduct = receipt["product_id"] as? String
             if ((myProduct?.contains("lifetime")) != nil) {
-                AUD.setEncyriptedValue(key: AUD.is_lifetime_member, value: true)
-                AUD.setEncyriptedValue(key: AUD.IS_PRO_MEMBER, value: true)
+                AUD.set(key: AUD.is_lifetime_member, value: true)
+                AUD.set(key: AUD.IS_PRO_MEMBER, value: true)
                 IAPHelper.setLocalizedTitleForFutureUse(productId: productId ?? "")
             }
             
@@ -149,7 +149,7 @@ extension IAPHelper {
             for pending_renewal in pending_renewal_array{
                 if let graceExpireDateStr = pending_renewal["grace_period_expires_date"] as? String{
                     print("Writing Grace Date: \(graceExpireDateStr)" )
-                    AUD.setEncyriptedValue(key: AUD.GRACE_EXPIRATION_DATE, value: graceExpireDateStr)
+                    AUD.set(key: AUD.GRACE_EXPIRATION_DATE, value: graceExpireDateStr)
                 }
             }
         }
