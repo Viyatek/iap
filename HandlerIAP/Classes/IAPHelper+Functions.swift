@@ -214,7 +214,7 @@ extension IAPHelper {
 }
 
 extension SKProductSubscriptionPeriod {
-    func asString() -> String {
+    public func asString() -> String {
         let unitCount = self.numberOfUnits
         let unitType = self.unit
         
