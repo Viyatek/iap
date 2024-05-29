@@ -41,11 +41,7 @@ extension IAPHelper {
                 // do not call block yet
                 return
         }
-        
 
-        
-        //Lambda URL
-        var urlString = "your_endpoint"//"https://krtiuy73y0.execute-api.us-west-2.amazonaws.com/live/verify-receipt"
 
         
         //Data
@@ -56,7 +52,7 @@ extension IAPHelper {
         
         
         //Request
-        var request = URLRequest(url: URL(string: urlString)!)
+        var request = URLRequest(url: URL(string: IAPHelper.urlString)!)
         request.httpMethod = "POST"
         request.setValue("Application/json", forHTTPHeaderField: "Content-Type")
         let httpBody = try? JSONSerialization.data(withJSONObject: requestData, options: [])

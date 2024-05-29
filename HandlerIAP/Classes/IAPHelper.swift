@@ -30,6 +30,7 @@ open class IAPHelper: NSObject {
     //App Secret
     public static var sharedSecret = ""
 
+    public static var urlString = "your_endpoint"
     
     //Price Formatter
     public static let priceFormatter: NumberFormatter = {
