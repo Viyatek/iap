@@ -42,9 +42,9 @@ open class IAPHelper: NSObject  {
         return formatter
     }()
     
-    private let productIdentifiers: Set<ProductIdentifier>
-    private var productsRequest: SKProductsRequest?
-    private var productsRequestCompletionHandler: ProductsRequestCompletionHandler?
+    public let productIdentifiers: Set<ProductIdentifier>
+    public var productsRequest: SKProductsRequest?
+    public var productsRequestCompletionHandler: ProductsRequestCompletionHandler?
     
     //For subscription part
     public var refreshSubscriptionSuccessBlock : SuccessBlock?
@@ -140,7 +140,7 @@ extension IAPHelper: SKProductsRequestDelegate {
     }
     
     //MARK: Clear Request Handler
-    private func clearRequestAndHandler() {
+    public func clearRequestAndHandler() {
         productsRequest = nil
         productsRequestCompletionHandler = nil
     }
@@ -186,7 +186,7 @@ extension IAPHelper: SKPaymentTransactionObserver {
     }
     
     //MARK: Complete
-    private func complete(transaction: SKPaymentTransaction) {
+    public func complete(transaction: SKPaymentTransaction) {
         Analytics.setUserProperty("premium", forName: "user_status")
         
         deliverPurchaseNotificationFor(identifier: transaction.payment.productIdentifier)
@@ -221,7 +221,7 @@ extension IAPHelper: SKPaymentTransactionObserver {
     }
     
     //MARK: Restore
-    private func restore(transaction: SKPaymentTransaction) {
+    public func restore(transaction: SKPaymentTransaction) {
         guard let productIdentifier = transaction.original?.payment.productIdentifier else { return }
         
         print("restore... \(productIdentifier)")
@@ -255,7 +255,7 @@ extension IAPHelper: SKPaymentTransactionObserver {
         
     }
     
-    private func fail(transaction: SKPaymentTransaction) {
+    public func fail(transaction: SKPaymentTransaction) {
         print("fail...")
         if let transactionError = transaction.error as NSError?,
             let localizedDescription = transaction.error?.localizedDescription,
@@ -266,7 +266,7 @@ extension IAPHelper: SKPaymentTransactionObserver {
         SKPaymentQueue.default().finishTransaction(transaction)
     }
     
-    private func deliverPurchaseNotificationFor(identifier: String?) {
+    public func deliverPurchaseNotificationFor(identifier: String?) {
         guard let identifier = identifier else { return }
         
         NotificationCenter.default.post(name: .IAPHelperPurchaseNotification, object: identifier)
