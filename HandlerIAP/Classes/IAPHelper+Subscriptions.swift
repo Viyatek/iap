@@ -22,7 +22,7 @@ public typealias FailureBlock = (Error?) -> Void
 extension IAPHelper {
     
     //MARK: Refresh Subscriptions Status
-    func refreshSubscriptionsStatus() {
+    public func refreshSubscriptionsStatus() {
         print("Refreshing Subscriptions Status")
         //Check time to overwhelming server
         /*if Date().timeIntervalSince1970 - self.lastSubscriptionStatusCheck < 1 {
