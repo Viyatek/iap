@@ -26,7 +26,7 @@ public struct IAPProducts {
     public static var productsJsonValue: JSON?
     
 
-    static func refreshProductIds() {
+    public static func refreshProductIds() {
         //Refresh product Ids
 //        YEARLY_SUBS = RemoteVariables.remoteConfig.configValue(forKey: RemoteVariables.YEARLY_SUBS).stringValue ?? RemoteVariables.YEARLY_SUBS
 //        QUARTERLY_SUBS = RemoteVariables.remoteConfig.configValue(forKey: RemoteVariables.QUARTERLY_SUBS).stringValue ?? RemoteVariables.QUARTERLY_SUBS
