@@ -2,8 +2,9 @@
 //  IAPProducts.swift
 //  HandlerIAP
 //
-//  Created by Ömer Karaca on 27.05.2024.
+//  Created by Ömer Karaca on 29.05.2024.
 //
+
 
 import Foundation
 import SwiftyJSON
@@ -55,4 +56,5 @@ public struct IAPProducts {
 func resourceNameForProductIdentifier(_ productIdentifier: String) -> String? {
     return productIdentifier.components(separatedBy: ".").last
 }
+
 

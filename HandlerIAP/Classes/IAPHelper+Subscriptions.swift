@@ -2,7 +2,7 @@
 //  IAPHelper+Subscriptions.swift
 //  HandlerIAP
 //
-//  Created by Ömer Karaca on 27.05.2024.
+//  Created by Ömer Karaca on 29.05.2024.
 //
 
 
@@ -192,4 +192,5 @@ enum ReceiptValidationError: Error {
     case notBought
     case expired
 }
+
 
