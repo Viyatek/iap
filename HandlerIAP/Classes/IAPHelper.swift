@@ -8,6 +8,8 @@ import StoreKit
 import SVProgressHUD
 import Adjust
 import FirebaseAnalytics
+import UIKit
+
 
 public typealias ProductIdentifier = String
 public typealias ProductsRequestCompletionHandler = (_ success: Bool, _ products: [SKProduct]?) -> Void
@@ -300,7 +302,7 @@ extension IAPHelper {
     }
 }
 
-import UIKit
+
 
 extension UIApplication {
     public class func getTopViewController(base: UIViewController? = UIApplication.shared.connectedScenes

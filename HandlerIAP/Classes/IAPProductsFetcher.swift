@@ -15,7 +15,7 @@ public protocol ProductUIUpdateDelegate {
     func updateUI(products: [SKProduct]?)
 }
 
-class IAPProductFetcher {
+public class IAPProductFetcher {
     
     //Products
     public static var products:  [SKProduct]?
