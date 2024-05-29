@@ -11,19 +11,19 @@ import StoreKit
 import SVProgressHUD
 import FirebaseAnalytics
 
-protocol ProductUIUpdateDelegate {
+public protocol ProductUIUpdateDelegate {
     func updateUI(products: [SKProduct]?)
 }
 
 class IAPProductFetcher {
     
     //Products
-    static var products:  [SKProduct]?
+    public static var products:  [SKProduct]?
     
     //UI Update Delegate
-    var productUIUpdateDelegate: ProductUIUpdateDelegate?
+    public var productUIUpdateDelegate: ProductUIUpdateDelegate?
     
-    func requestProductsFromStore() {
+    public func requestProductsFromStore() {
         
         print("Requesting Products From Store")
         IAPProducts.store.requestProducts{ success, products in
@@ -38,7 +38,7 @@ class IAPProductFetcher {
         }
     }
     
-    func getProduct(byIdentifier identifier: String) -> SKProduct? {
+    public func getProduct(byIdentifier identifier: String) -> SKProduct? {
         
         guard let products = IAPProductFetcher.products else{
             return nil
