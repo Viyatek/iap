@@ -14,7 +14,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     
     public static let shared = SubscriptionManager()
     public static var sharedSecret = ""
-    
+    public static var endPoint = ""
     // Products
     public static var products: [SKProduct]?
     //UI Update Delegate
@@ -125,6 +125,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
 
         // Set up the validation URL (sandbox)
         let storeURL = {
+            return URL(string: SubscriptionManager.endPoint)!
             #if DEBUG
                 return URL(string: "https://sandbox.itunes.apple.com/verifyReceipt")!
             #else
