@@ -1,14 +1,14 @@
 //
 //  SubscriptionManager.swift
-//  HandlerIAP
+//  Stella
 //
 //  Created by Ömer Karaca on 1.06.2024.
 //
 
-
 import Foundation
 import StoreKit
 import SVProgressHUD
+import Adjust
 
 class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsRequestDelegate {
     
@@ -22,7 +22,8 @@ class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsReq
     
     private override init() {
         super.init()
-        SKPaymentQueue.default().add(self)
+        //Add it to purchase func to prevent unexpected purchase
+        //SKPaymentQueue.default().add(self)
     }
     
     deinit {
@@ -62,6 +63,7 @@ class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsReq
     func purchase(product: SKProduct) {
         SVProgressHUD.show()
         let payment = SKPayment(product: product)
+        SKPaymentQueue.default().add(self)
         SKPaymentQueue.default().add(payment)
     }
     
@@ -221,7 +223,7 @@ class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsReq
         }
 
         if hasLifetimePurchase {
-            return (true, Calendar.current.date(byAdding: .year, value: 50, to: Date())!)
+            return (true, Calendar.current.date(byAdding: .year, value: 100, to: Date())!)
         } else if let latestExpiryDate = latestExpiryDate {
             return (true, latestExpiryDate)
         } else {
@@ -306,7 +308,7 @@ class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsReq
     }
     
     func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
-        
+        print("in payment queue subs manager")
         for transaction in transactions {
             switch transaction.transactionState {
             case .purchased, .restored:
@@ -314,25 +316,63 @@ class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsReq
 
                 }
                 SKPaymentQueue.default().finishTransaction(transaction)
-                purchaseSuccessDelegate?.purchaseSuccess(transaction: transaction)
+                print("identifier isss: \(transaction.payment.productIdentifier)")
+                
+                if let purchasedProduct = getProduct(from: transaction) {
+                    
+                    purchaseSuccessDelegate?.purchaseSuccess(transaction: transaction, subscribedProduct: purchasedProduct)
+                    
+                    if isLifetimePurchase(productId: transaction.payment.productIdentifier) {
+                        sendLifetimeReportToAdjust(price: Float(truncating: purchasedProduct.price), currency: purchasedProduct.priceLocale.currencyCode!, transaction: transaction, lifeTimeEventToken: "adjustLifetimePurchaseToken")
+                    } else {
+                        sendSubscriptionToAdjust(price: purchasedProduct.price, currency: purchasedProduct.priceLocale.currencyCode!, transaction: transaction)
+                    }
+                    
+                    
 
+                    if let introductoryPrice = purchasedProduct.introductoryPrice, introductoryPrice.paymentMode == .freeTrial {
+                        //print("\(selectedProduct.localizedTitle) offers a free trial.")
+                        reportEventToAdjust(eventCode: "pxtw9x")
+                    } else {
+                        //print("\(selectedProduct.localizedTitle) does not offer a free trial.")
+                        reportEventToAdjust(eventCode: "1iyz2t")
+                    }
+
+                }
+                
+                if SVProgressHUD.isVisible() {
+                    SVProgressHUD.dismiss()
+                }
+                SKPaymentQueue.default().remove(self)
             case .failed:
+                print("Failed to pay")
                 if let error = transaction.error as NSError?,
                    error.code != SKError.paymentCancelled.rawValue {
                     print("Transaction Failed: \(error.localizedDescription)")
                 }
                 SKPaymentQueue.default().finishTransaction(transaction)
+                if SVProgressHUD.isVisible() {
+                    SVProgressHUD.dismiss()
+                }
+                
+                SKPaymentQueue.default().remove(self)
             default:
                 break
             }
         }
-        if SVProgressHUD.isVisible() {
-            SVProgressHUD.dismiss()
+    }
+    
+    private func getProduct(from transaction: SKPaymentTransaction) -> SKProduct? {
+        guard let productIdentifier = transaction.payment.productIdentifier as String?,
+              let product = availableProducts.first(where: { $0.productIdentifier == productIdentifier }) else {
+            return nil
         }
+        return product
     }
     
     // MARK: - Restore Purchases
     func restorePurchases() {
+        SVProgressHUD.show()
         SKPaymentQueue.default().restoreCompletedTransactions()
     }
 
@@ -347,11 +387,51 @@ class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsReq
         print("Failed to restore completed transactions: \(error.localizedDescription)")
     }
     
+    //MARK: Adjust
+    func reportEventToAdjust(eventCode: String) {
+        let event = ADJEvent(eventToken: eventCode)
+        Adjust.trackEvent(event)
+    }
+    
+    func sendSubscriptionToAdjust(price: NSDecimalNumber, currency: String, transaction: SKPaymentTransaction) {
+        print("sending SubscriptionToAdjust")
+        guard let transactionId = transaction.transactionIdentifier, let receiptUrl = Bundle.main.appStoreReceiptURL, let receipt = try? Data(contentsOf: receiptUrl) else{
+            print("Adjust subscription report error. Parameters are nil");return}
+        
+        guard let subscription = ADJSubscription(
+            price: price,
+            currency: currency,
+            transactionId: transactionId,
+            andReceipt: receipt) else {
+                print("Adjust subscription report error. Subscription object is nil.")
+                return
+            }
+        
+        if let date = transaction.transactionDate, let region = Locale.current.regionCode{
+            subscription.setTransactionDate(date)
+            subscription.setSalesRegion(region)
+        }
+
+        Adjust.trackSubscription(subscription)
+        print("Adjust subscription successfully tracked. ID: \(subscription.transactionId)")
+    }
+    
+    //Lifetime
+    func sendLifetimeReportToAdjust(price: Float, currency: String, transaction: SKPaymentTransaction, lifeTimeEventToken: String = "adjustLifetimePurchaseToken") {
+            print("Reporting lifetime purchase to Adjust. Transaction Identifier: \(String(describing: transaction.transactionIdentifier)), price: \(price), currency: \(currency)")
+            let event = ADJEvent(eventToken: lifeTimeEventToken)//TODO
+            event?.setRevenue(Double(price), currency: currency)
+            if let transactionId = transaction.transactionIdentifier{
+                event?.setTransactionId(transactionId)
+            }
+            Adjust.trackEvent(event)
+    }
+    
 }
 
 
 public protocol PurchaseSuccessDelegate {
-    func purchaseSuccess(transaction: SKPaymentTransaction)
+    func purchaseSuccess(transaction: SKPaymentTransaction, subscribedProduct: SKProduct)
 }
 
 extension SKProductSubscriptionPeriod {
@@ -382,6 +462,7 @@ extension SKProductSubscriptionPeriod {
         }
     }
 }
+
 
 
 
