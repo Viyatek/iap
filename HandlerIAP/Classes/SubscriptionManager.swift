@@ -35,7 +35,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     var availableProducts: [SKProduct] = []
     var productRequestCompletion: ((Result<[SKProduct], Error>) -> Void)?
     
-    func fetchAvailableProducts(productIdentifiers: [String], completion: @escaping (Result<[SKProduct], Error>) -> Void) {
+    public func fetchAvailableProducts(productIdentifiers: [String], completion: @escaping (Result<[SKProduct], Error>) -> Void) {
         self.productRequestCompletion = completion
         let productIdentifiers = Set(productIdentifiers)
         productsRequest = SKProductsRequest(productIdentifiers: productIdentifiers)
@@ -43,31 +43,31 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         productsRequest?.start()
     }
 
-    func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
+    public func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
         availableProducts = response.products
         productRequestCompletion?(.success(response.products))
         clearProductRequest()
     }
 
-    func request(_ request: SKRequest, didFailWithError error: Error) {
+    public func request(_ request: SKRequest, didFailWithError error: Error) {
         productRequestCompletion?(.failure(error))
         clearProductRequest()
     }
 
-    private func clearProductRequest() {
+    public  func clearProductRequest() {
         productsRequest = nil
         productRequestCompletion = nil
     }
 
     // MARK: - Purchase
-    func purchase(product: SKProduct) {
+    public func purchase(product: SKProduct) {
         SVProgressHUD.show()
         let payment = SKPayment(product: product)
         SKPaymentQueue.default().add(self)
         SKPaymentQueue.default().add(payment)
     }
     
-    func checkSubscriptionStatus(completion: @escaping(_ isPro: Bool, _ expiryDate: Date) -> Void) {
+    public func checkSubscriptionStatus(completion: @escaping(_ isPro: Bool, _ expiryDate: Date) -> Void) {
         print("innnnnn checkSubscriptionStatus")
         validateReceipt { isPro, subsExpiryDate in
             print("in validate comp")
@@ -76,7 +76,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     }
     
     
-    func fetchReceipt() -> Data? {
+    public func fetchReceipt() -> Data? {
         if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
            FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
             do {
@@ -93,7 +93,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     }
 
     
-    func validateReceipt(transaction: SKPaymentTransaction? = nil, completion: @escaping(_ isPro: Bool, _ expiryDate: Date) -> Void) {
+    public func validateReceipt(transaction: SKPaymentTransaction? = nil, completion: @escaping(_ isPro: Bool, _ expiryDate: Date) -> Void) {
         print("in validateReceipt")
         guard let receiptData = fetchReceipt() else {
             print("Receipt data is nil")
@@ -186,7 +186,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     }
 
     
-    func checkSubscriptionStatus(receipt: [String: Any]) -> (Bool, Date) {
+    public func checkSubscriptionStatus(receipt: [String: Any]) -> (Bool, Date) {
         guard let receiptInfo = receipt["latest_receipt_info"] as? [[String: Any]] else {
             print("No latest_receipt_info found in receipt")
             return (false, Date())
@@ -232,12 +232,12 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     }
 
 
-    func isLifetimePurchase(productId: String) -> Bool {
+    public func isLifetimePurchase(productId: String) -> Bool {
         return productId.contains("lifetime")
     }
 
     //MARK: Check Refunds
-    func checkForRefunds(completion: @escaping (Bool) -> Void) {
+    public func checkForRefunds(completion: @escaping (Bool) -> Void) {
         print("Checking for refunds")
         guard let receiptData = fetchReceipt() else {
             print("Receipt data is nil")
@@ -291,7 +291,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         task.resume()
     }
 
-    func checkForRefundsInReceipt(receipt: [String: Any]) -> Bool {
+    public func checkForRefundsInReceipt(receipt: [String: Any]) -> Bool {
         guard let receiptInfo = receipt["latest_receipt_info"] as? [[String: Any]] else {
             print("No latest_receipt_info found in receipt")
             return false
@@ -307,7 +307,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         return false
     }
     
-    func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
+    public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         print("in payment queue subs manager")
         for transaction in transactions {
             switch transaction.transactionState {
@@ -362,7 +362,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         }
     }
     
-    private func getProduct(from transaction: SKPaymentTransaction) -> SKProduct? {
+    public func getProduct(from transaction: SKPaymentTransaction) -> SKProduct? {
         guard let productIdentifier = transaction.payment.productIdentifier as String?,
               let product = availableProducts.first(where: { $0.productIdentifier == productIdentifier }) else {
             return nil
@@ -371,19 +371,19 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     }
     
     // MARK: - Restore Purchases
-    func restorePurchases() {
+    public func restorePurchases() {
         SVProgressHUD.show()
         SKPaymentQueue.default().restoreCompletedTransactions()
     }
 
-    func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
+    public func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
         print("Restored completed transactions finished.")
         validateReceipt { isPro, subsExpiryDate in
             
         }
     }
 
-    func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
+    public func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
         print("Failed to restore completed transactions: \(error.localizedDescription)")
     }
     
@@ -434,34 +434,7 @@ public protocol PurchaseSuccessDelegate {
     func purchaseSuccess(transaction: SKPaymentTransaction, subscribedProduct: SKProduct)
 }
 
-extension SKProductSubscriptionPeriod {
-    func asString() -> String {
-        let unitCount = self.numberOfUnits
-        let unitType = self.unit
-        
-        switch unitType {
-        case .day:
-            print("\(unitCount) day\(unitCount > 1 ? "s" : "")")
-            return "daily"
-        case .week:
-            print("\(unitCount) week\(unitCount > 1 ? "s" : "")")
-            return "weekly"
-        case .month:
-            print("\(unitCount) month\(unitCount > 1 ? "s" : "")")
-            if unitCount == 3 {
-                return "quarterly"
-            } else {
-                return "monthly"
-            }
-        case .year:
-            print("\(unitCount) year\(unitCount > 1 ? "s" : "")")
-            return "yearly"
-        @unknown default:
-            print("\(unitCount) unit(s)")
-            return "lifetime"
-        }
-    }
-}
+
 
 
 
