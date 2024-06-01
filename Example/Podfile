@@ -7,7 +7,6 @@ target 'HandlerIAP_Example' do
   pod 'SwiftyJSON'
   pod 'SVProgressHUD'
   pod 'Adjust'
-  pod 'FirebaseAnalytics'
 
   target 'HandlerIAP_Tests' do
     inherit! :search_paths
