@@ -10,15 +10,22 @@ import StoreKit
 import SVProgressHUD
 import Adjust
 
-public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsRequestDelegate {
+class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsRequestDelegate {
     
     public static let shared = SubscriptionManager()
     public static var sharedSecret = ""
     public static var endPoint = ""
+    
+    
     // Products
     public static var products: [SKProduct]?
+
     //UI Update Delegate
     public var purchaseSuccessDelegate: PurchaseSuccessDelegate?
+    
+    //Restore Delegate
+    public weak var restorePurchasesDelegate: RestorePurchasesDelegate?
+    
     
     private override init() {
         super.init()
@@ -54,7 +61,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         clearProductRequest()
     }
 
-    public  func clearProductRequest() {
+    public func clearProductRequest() {
         productsRequest = nil
         productRequestCompletion = nil
     }
@@ -67,7 +74,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         SKPaymentQueue.default().add(payment)
     }
     
-    public func checkSubscriptionStatus(completion: @escaping(_ isPro: Bool, _ expiryDate: Date) -> Void) {
+    public func  checkSubscriptionStatus(completion: @escaping(_ isPro: Bool, _ expiryDate: Date) -> Void) {
         print("innnnnn checkSubscriptionStatus")
         validateReceipt { isPro, subsExpiryDate in
             print("in validate comp")
@@ -91,7 +98,79 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         }
         return nil
     }
+    
 
+    public func fetchReceiptForFreeTrialCheck(completion: @escaping (Data?) -> Void) {
+        guard let receiptURL = Bundle.main.appStoreReceiptURL else {
+            completion(nil)
+            return
+        }
+        
+        do {
+            let receiptData = try Data(contentsOf: receiptURL)
+            completion(receiptData)
+        } catch {
+            completion(nil)
+        }
+    }
+
+    
+    public func sendReceiptToServer(receiptData: Data, completion: @escaping (Bool) -> Void) {
+        // Your server URL
+        let url = URL(string: SubscriptionManager.endPoint)!
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let requestBody: [String: Any] = ["receipt-data": receiptData.base64EncodedString()]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody, options: [])
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data, error == nil else {
+                completion(false)
+                return
+            }
+            
+            do {
+                // Parse the JSON response
+                if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                    // Check for trial subscription in the receipt
+                    if let receiptInfo = jsonResponse["receipt"] as? [String: Any],
+                       let inApp = receiptInfo["in_app"] as? [[String: Any]] {
+                        
+                        for purchase in inApp {
+                            if let isTrialPeriod = purchase["is_trial_period"] as? String,
+                               isTrialPeriod == "true" {
+                                completion(true)
+                                return
+                            }
+                        }
+                    }
+                }
+                completion(false)
+            } catch {
+                completion(false)
+            }
+        }
+        
+        task.resume()
+    }
+
+    
+    public func checkFreeTrialStatus(completion: @escaping (Bool) -> Void) {
+        fetchReceiptForFreeTrialCheck { [self] receiptData in
+            guard let receiptData = receiptData else {
+                completion(false)
+                return
+            }
+            
+            sendReceiptToServer(receiptData: receiptData) { hasUsedFreeTrial in
+                completion(hasUsedFreeTrial)
+            }
+        }
+    }
+    
     
     public func validateReceipt(transaction: SKPaymentTransaction? = nil, completion: @escaping(_ isPro: Bool, _ expiryDate: Date) -> Void) {
         print("in validateReceipt")
@@ -259,6 +338,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         }
 
         let storeURL = {
+            return URL(string: SubscriptionManager.endPoint)!
             #if DEBUG
                 return URL(string: "https://sandbox.itunes.apple.com/verifyReceipt")!
             #else
@@ -312,12 +392,12 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         print("in payment queue subs manager")
         for transaction in transactions {
             switch transaction.transactionState {
-            case .purchased, .restored:
+            case .purchased:
                 validateReceipt(transaction: transaction) { isPro, subsExpiryDate in
 
                 }
                 SKPaymentQueue.default().finishTransaction(transaction)
-                print("identifier isss: \(transaction.payment.productIdentifier)")
+                print("identifier is for purchase: \(transaction.payment.productIdentifier)")
                 
                 if let purchasedProduct = getProduct(from: transaction) {
                     
@@ -345,6 +425,13 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
                     SVProgressHUD.dismiss()
                 }
                 SKPaymentQueue.default().remove(self)
+            case .restored:
+                validateReceipt(transaction: transaction) { isPro, subsExpiryDate in
+
+                }
+                SKPaymentQueue.default().finishTransaction(transaction)
+                print("identifier is for restore: \(transaction.payment.productIdentifier)")
+
             case .failed:
                 print("Failed to pay")
                 if let error = transaction.error as NSError?,
@@ -363,7 +450,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         }
     }
     
-    public func getProduct(from transaction: SKPaymentTransaction) -> SKProduct? {
+    public  func getProduct(from transaction: SKPaymentTransaction) -> SKProduct? {
         guard let productIdentifier = transaction.payment.productIdentifier as String?,
               let product = availableProducts.first(where: { $0.productIdentifier == productIdentifier }) else {
             return nil
@@ -374,19 +461,24 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     // MARK: - Restore Purchases
     public func restorePurchases() {
         SVProgressHUD.show()
+        SKPaymentQueue.default().add(self)
         SKPaymentQueue.default().restoreCompletedTransactions()
     }
 
     public func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
         print("Restored completed transactions finished.")
         validateReceipt { isPro, subsExpiryDate in
-            
+            self.restorePurchasesDelegate?.restorePurchasesCompleted(isPro: isPro, expiryDate: subsExpiryDate)
+            SKPaymentQueue.default().remove(self)
         }
     }
 
     public func paymentQueue(_ queue: SKPaymentQueue, restoreCompletedTransactionsFailedWithError error: Error) {
         print("Failed to restore completed transactions: \(error.localizedDescription)")
+        self.restorePurchasesDelegate?.restorePurchasesFailed(error: error)
+        SKPaymentQueue.default().remove(self)
     }
+
     
     //MARK: Adjust
     func reportEventToAdjust(eventCode: String) {
@@ -436,7 +528,7 @@ public protocol PurchaseSuccessDelegate {
 }
 
 
-
-
-
-
+public protocol RestorePurchasesDelegate: AnyObject {
+    func restorePurchasesCompleted(isPro: Bool, expiryDate: Date)
+    func restorePurchasesFailed(error: Error)
+}
