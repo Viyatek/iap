@@ -532,3 +532,4 @@ public protocol RestorePurchasesDelegate: AnyObject {
     func restorePurchasesCompleted(isPro: Bool, expiryDate: Date)
     func restorePurchasesFailed(error: Error)
 }
+
