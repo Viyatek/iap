@@ -11,7 +11,7 @@ import SVProgressHUD
 import Adjust
 
 public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsRequestDelegate {
-    
+
     public static let shared = SubscriptionManager()
     public static var sharedSecret = ""
     public static var endPoint = ""
@@ -204,11 +204,11 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
 
         // Set up the validation URL (sandbox)
         let storeURL = {
-            return URL(string: SubscriptionManager.endPoint)!
             #if DEBUG
                 return URL(string: "https://sandbox.itunes.apple.com/verifyReceipt")!
             #else
-                return URL(string: "https://buy.itunes.apple.com/verifyReceipt")!
+                return URL(string: SubscriptionManager.endPoint)!
+                //return URL(string: "https://buy.itunes.apple.com/verifyReceipt")!
             #endif
         }()
 
@@ -338,11 +338,11 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         }
 
         let storeURL = {
-            return URL(string: SubscriptionManager.endPoint)!
             #if DEBUG
                 return URL(string: "https://sandbox.itunes.apple.com/verifyReceipt")!
             #else
-                return URL(string: "https://buy.itunes.apple.com/verifyReceipt")!
+                return URL(string: SubscriptionManager.endPoint)!
+                //return URL(string: "https://buy.itunes.apple.com/verifyReceipt")!
             #endif
         }()
 
@@ -531,3 +531,4 @@ public protocol RestorePurchasesDelegate: AnyObject {
     func restorePurchasesCompleted(isPro: Bool, expiryDate: Date)
     func restorePurchasesFailed(error: Error)
 }
+
