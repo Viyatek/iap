@@ -75,7 +75,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     }
     
     public func  checkSubscriptionStatus(completion: @escaping(_ isPro: Bool, _ expiryDate: Date) -> Void) {
-        print("innnnnn checkSubscriptionStatus")
+        print("inside checkSubscriptionStatus")
         validateReceipt { isPro, subsExpiryDate in
             print("in validate comp")
             completion(isPro, subsExpiryDate)
@@ -393,38 +393,37 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         for transaction in transactions {
             switch transaction.transactionState {
             case .purchased:
-                validateReceipt(transaction: transaction) { isPro, subsExpiryDate in
+                validateReceipt(transaction: transaction) { [self] isPro, subsExpiryDate in
+                    SKPaymentQueue.default().finishTransaction(transaction)
+                    print("identifier is for purchase: \(transaction.payment.productIdentifier)")
+                    
+                    if let purchasedProduct = getProduct(from: transaction) {
+                        
+                        purchaseSuccessDelegate?.purchaseSuccess(transaction: transaction, subscribedProduct: purchasedProduct, expireDate: subsExpiryDate)
+                        
+                        if isLifetimePurchase(productId: transaction.payment.productIdentifier) {
+                            sendLifetimeReportToAdjust(price: Float(truncating: purchasedProduct.price), currency: purchasedProduct.priceLocale.currencyCode!, transaction: transaction, lifeTimeEventToken: "adjustLifetimePurchaseToken")
+                        } else {
+                            sendSubscriptionToAdjust(price: purchasedProduct.price, currency: purchasedProduct.priceLocale.currencyCode!, transaction: transaction)
+                        }
+                        
+                        
 
-                }
-                SKPaymentQueue.default().finishTransaction(transaction)
-                print("identifier is for purchase: \(transaction.payment.productIdentifier)")
-                
-                if let purchasedProduct = getProduct(from: transaction) {
-                    
-                    purchaseSuccessDelegate?.purchaseSuccess(transaction: transaction, subscribedProduct: purchasedProduct)
-                    
-                    if isLifetimePurchase(productId: transaction.payment.productIdentifier) {
-                        sendLifetimeReportToAdjust(price: Float(truncating: purchasedProduct.price), currency: purchasedProduct.priceLocale.currencyCode!, transaction: transaction, lifeTimeEventToken: "adjustLifetimePurchaseToken")
-                    } else {
-                        sendSubscriptionToAdjust(price: purchasedProduct.price, currency: purchasedProduct.priceLocale.currencyCode!, transaction: transaction)
+                        if let introductoryPrice = purchasedProduct.introductoryPrice, introductoryPrice.paymentMode == .freeTrial {
+                            //print("\(selectedProduct.localizedTitle) offers a free trial.")
+                            reportEventToAdjust(eventCode: "pxtw9x")
+                        } else {
+                            //print("\(selectedProduct.localizedTitle) does not offer a free trial.")
+                            reportEventToAdjust(eventCode: "1iyz2t")
+                        }
+
                     }
                     
-                    
-
-                    if let introductoryPrice = purchasedProduct.introductoryPrice, introductoryPrice.paymentMode == .freeTrial {
-                        //print("\(selectedProduct.localizedTitle) offers a free trial.")
-                        reportEventToAdjust(eventCode: "pxtw9x")
-                    } else {
-                        //print("\(selectedProduct.localizedTitle) does not offer a free trial.")
-                        reportEventToAdjust(eventCode: "1iyz2t")
+                    if SVProgressHUD.isVisible() {
+                        SVProgressHUD.dismiss()
                     }
-
+                    SKPaymentQueue.default().remove(self)
                 }
-                
-                if SVProgressHUD.isVisible() {
-                    SVProgressHUD.dismiss()
-                }
-                SKPaymentQueue.default().remove(self)
             case .restored:
                 validateReceipt(transaction: transaction) { isPro, subsExpiryDate in
 
@@ -524,7 +523,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
 
 
 public protocol PurchaseSuccessDelegate {
-    func purchaseSuccess(transaction: SKPaymentTransaction, subscribedProduct: SKProduct)
+    func purchaseSuccess(transaction: SKPaymentTransaction, subscribedProduct: SKProduct, expireDate: Date)
 }
 
 
@@ -532,4 +531,3 @@ public protocol RestorePurchasesDelegate: AnyObject {
     func restorePurchasesCompleted(isPro: Bool, expiryDate: Date)
     func restorePurchasesFailed(error: Error)
 }
-
