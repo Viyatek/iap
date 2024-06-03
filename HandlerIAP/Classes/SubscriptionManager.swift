@@ -24,7 +24,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     public var purchaseSuccessDelegate: PurchaseSuccessDelegate?
     
     //Restore Delegate
-    public weak var restorePurchasesDelegate: RestorePurchasesDelegate?
+    public var restorePurchasesDelegate: RestorePurchasesDelegate?
     
     
     private override init() {
@@ -527,7 +527,7 @@ public protocol PurchaseSuccessDelegate {
 }
 
 
-public protocol RestorePurchasesDelegate: AnyObject {
+public protocol RestorePurchasesDelegate {
     func restorePurchasesCompleted(isPro: Bool, expiryDate: Date)
     func restorePurchasesFailed(error: Error)
 }
