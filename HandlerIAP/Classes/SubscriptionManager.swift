@@ -10,7 +10,7 @@ import StoreKit
 import SVProgressHUD
 import Adjust
 
-class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsRequestDelegate {
+public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsRequestDelegate {
     
     public static let shared = SubscriptionManager()
     public static var sharedSecret = ""
