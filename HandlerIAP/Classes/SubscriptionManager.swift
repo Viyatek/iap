@@ -400,22 +400,6 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
                     if let purchasedProduct = getProduct(from: transaction) {
                         
                         purchaseSuccessDelegate?.purchaseSuccess(transaction: transaction, subscribedProduct: purchasedProduct, expireDate: subsExpiryDate)
-                        
-                        if isLifetimePurchase(productId: transaction.payment.productIdentifier) {
-                            sendLifetimeReportToAdjust(price: Float(truncating: purchasedProduct.price), currency: purchasedProduct.priceLocale.currencyCode!, transaction: transaction, lifeTimeEventToken: "adjustLifetimePurchaseToken")
-                        } else {
-                            sendSubscriptionToAdjust(price: purchasedProduct.price, currency: purchasedProduct.priceLocale.currencyCode!, transaction: transaction)
-                        }
-                        
-                        
-
-                        if let introductoryPrice = purchasedProduct.introductoryPrice, introductoryPrice.paymentMode == .freeTrial {
-                            //print("\(selectedProduct.localizedTitle) offers a free trial.")
-                            reportEventToAdjust(eventCode: "pxtw9x")
-                        } else {
-                            //print("\(selectedProduct.localizedTitle) does not offer a free trial.")
-                            reportEventToAdjust(eventCode: "1iyz2t")
-                        }
 
                     }
                     
@@ -476,47 +460,6 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         print("Failed to restore completed transactions: \(error.localizedDescription)")
         self.restorePurchasesDelegate?.restorePurchasesFailed(error: error)
         SKPaymentQueue.default().remove(self)
-    }
-
-    
-    //MARK: Adjust
-    func reportEventToAdjust(eventCode: String) {
-        let event = ADJEvent(eventToken: eventCode)
-        Adjust.trackEvent(event)
-    }
-    
-    func sendSubscriptionToAdjust(price: NSDecimalNumber, currency: String, transaction: SKPaymentTransaction) {
-        print("sending SubscriptionToAdjust")
-        guard let transactionId = transaction.transactionIdentifier, let receiptUrl = Bundle.main.appStoreReceiptURL, let receipt = try? Data(contentsOf: receiptUrl) else{
-            print("Adjust subscription report error. Parameters are nil");return}
-        
-        guard let subscription = ADJSubscription(
-            price: price,
-            currency: currency,
-            transactionId: transactionId,
-            andReceipt: receipt) else {
-                print("Adjust subscription report error. Subscription object is nil.")
-                return
-            }
-        
-        if let date = transaction.transactionDate, let region = Locale.current.regionCode{
-            subscription.setTransactionDate(date)
-            subscription.setSalesRegion(region)
-        }
-
-        Adjust.trackSubscription(subscription)
-        print("Adjust subscription successfully tracked. ID: \(subscription.transactionId)")
-    }
-    
-    //Lifetime
-    func sendLifetimeReportToAdjust(price: Float, currency: String, transaction: SKPaymentTransaction, lifeTimeEventToken: String = "adjustLifetimePurchaseToken") {
-            print("Reporting lifetime purchase to Adjust. Transaction Identifier: \(String(describing: transaction.transactionIdentifier)), price: \(price), currency: \(currency)")
-            let event = ADJEvent(eventToken: lifeTimeEventToken)//TODO
-            event?.setRevenue(Double(price), currency: currency)
-            if let transactionId = transaction.transactionIdentifier{
-                event?.setTransactionId(transactionId)
-            }
-            Adjust.trackEvent(event)
     }
     
 }
