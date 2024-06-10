@@ -204,12 +204,13 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
 
         // Set up the validation URL (sandbox)
         let storeURL = {
-            #if DEBUG
-                return URL(string: "https://sandbox.itunes.apple.com/verifyReceipt")!
-            #else
-                return URL(string: SubscriptionManager.endPoint)!
-                //return URL(string: "https://buy.itunes.apple.com/verifyReceipt")!
-            #endif
+            return URL(string: SubscriptionManager.endPoint)!
+//            #if DEBUG
+//                return URL(string: "https://sandbox.itunes.apple.com/verifyReceipt")!
+//            #else
+//                return URL(string: SubscriptionManager.endPoint)!
+//                //return URL(string: "https://buy.itunes.apple.com/verifyReceipt")!
+//            #endif
         }()
 
         // Create the request
@@ -338,12 +339,13 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
         }
 
         let storeURL = {
-            #if DEBUG
-                return URL(string: "https://sandbox.itunes.apple.com/verifyReceipt")!
-            #else
-                return URL(string: SubscriptionManager.endPoint)!
-                //return URL(string: "https://buy.itunes.apple.com/verifyReceipt")!
-            #endif
+            return URL(string: SubscriptionManager.endPoint)!
+//            #if DEBUG
+//                return URL(string: "https://sandbox.itunes.apple.com/verifyReceipt")!
+//            #else
+//                return URL(string: SubscriptionManager.endPoint)!
+//                //return URL(string: "https://buy.itunes.apple.com/verifyReceipt")!
+//            #endif
         }()
 
         var request = URLRequest(url: storeURL)

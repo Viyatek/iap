@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import HandlerIAP
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -16,6 +17,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+        
+        //Check Subscription Status
+        SubscriptionManager.sharedSecret = ""
+        SubscriptionManager.endPoint = ""
+        // Initialize the SubscriptionManager and check subscription status
+        DispatchQueue.main.async {
+            SubscriptionManager.shared.checkSubscriptionStatus { isPro, subsExpiryDate in
+                //Handle result
+            }
+        }
+        
         return true
     }
 
