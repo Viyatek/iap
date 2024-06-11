@@ -175,14 +175,12 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     public func validateReceipt(transaction: SKPaymentTransaction? = nil, completion: @escaping(_ isPro: Bool, _ expiryDate: Date) -> Void) {
         print("in validateReceipt")
         guard let receiptData = fetchReceipt() else {
-            print("Receipt data is nil")
+            print("Receipt data is nill")
+            completion(false, Date())
             return
         }
         let receiptString = receiptData.base64EncodedString(options: [])
 
-        // Debug: Log the receipt string length and content
-        //print("Receipt string length: \(receiptString.count)")
-        //print("Receipt string: \(receiptString)")
 
         // Prepare the request contents
         let requestContents: [String: Any] = [
