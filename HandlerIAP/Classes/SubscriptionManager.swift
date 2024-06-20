@@ -7,8 +7,6 @@
 
 import Foundation
 import StoreKit
-import SVProgressHUD
-import Adjust
 
 public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProductsRequestDelegate {
 
@@ -68,7 +66,6 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
 
     // MARK: - Purchase
     public func purchase(product: SKProduct) {
-        SVProgressHUD.show()
         let payment = SKPayment(product: product)
         SKPaymentQueue.default().add(self)
         SKPaymentQueue.default().add(payment)
@@ -394,8 +391,6 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
             switch transaction.transactionState {
             case .purchased:
                 validateReceipt(transaction: transaction) { [self] isPro, subsExpiryDate in
-                    SKPaymentQueue.default().finishTransaction(transaction)
-                    print("identifier is for purchase: \(transaction.payment.productIdentifier)")
                     
                     if let purchasedProduct = getProduct(from: transaction) {
                         
@@ -403,9 +398,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
 
                     }
                     
-                    if SVProgressHUD.isVisible() {
-                        SVProgressHUD.dismiss()
-                    }
+                    SKPaymentQueue.default().finishTransaction(transaction)
                     SKPaymentQueue.default().remove(self)
                 }
             case .restored:
@@ -413,18 +406,17 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
 
                 }
                 SKPaymentQueue.default().finishTransaction(transaction)
-                print("identifier is for restore: \(transaction.payment.productIdentifier)")
+                SKPaymentQueue.default().remove(self)
 
             case .failed:
-                print("Failed to pay")
-                if let error = transaction.error as NSError?,
-                   error.code != SKError.paymentCancelled.rawValue {
-                    print("Transaction Failed: \(error.localizedDescription)")
-                }
+//                print("Failed to pay")
+//                if let error = transaction.error as NSError?,
+//                   error.code != SKError.paymentCancelled.rawValue {
+//                    print("Transaction Failed: \(error.localizedDescription)")
+//                }
+                
+                purchaseSuccessDelegate?.purchaseFailed(transaction: transaction, error: transaction.error)
                 SKPaymentQueue.default().finishTransaction(transaction)
-                if SVProgressHUD.isVisible() {
-                    SVProgressHUD.dismiss()
-                }
                 
                 SKPaymentQueue.default().remove(self)
             default:
@@ -443,7 +435,6 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
     
     // MARK: - Restore Purchases
     public func restorePurchases() {
-        SVProgressHUD.show()
         SKPaymentQueue.default().add(self)
         SKPaymentQueue.default().restoreCompletedTransactions()
     }
@@ -467,6 +458,7 @@ public class SubscriptionManager: NSObject, SKPaymentTransactionObserver, SKProd
 
 public protocol PurchaseSuccessDelegate {
     func purchaseSuccess(transaction: SKPaymentTransaction, subscribedProduct: SKProduct, expireDate: Date)
+    func purchaseFailed(transaction: SKPaymentTransaction, error: Error?)
 }
 
 

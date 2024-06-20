@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'HandlerIAP'
-  s.version          = '0.4.6'
+  s.version          = '0.4.7'
   s.summary          = 'In App Purchase Handler for iOS app'
 
 # This description is used to generate tags and improve search results.
@@ -36,9 +36,9 @@ Pod::Spec.new do |s|
   #s.subspec 'Internal' do |ss|
   #  ss.source_files = 'HandlerIAP/Classes/Internal/**/*'
   #end
-  s.dependency 'SwiftyJSON'
-  s.dependency 'SVProgressHUD'
-  s.dependency 'Adjust'
+  #s.dependency 'SwiftyJSON'
+  #s.dependency 'SVProgressHUD'
+  #s.dependency 'Adjust'
 
   
   s.static_framework = true
