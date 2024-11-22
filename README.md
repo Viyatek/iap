@@ -27,3 +27,4 @@ Viya-Teknoloji, viyateknoloji@gmail.com
 ## License
 
 HandlerIAP is available under the MIT license. See the LICENSE file for more info.
+Do not forget to call configure function at the beginning of the app.
