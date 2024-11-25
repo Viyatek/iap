@@ -20,6 +20,7 @@ protocol PurchaseHandlerDelegate: AnyObject {
     )
     func didFailPurchase(with error: Error?)
     func didUpdateProducts(_ products: [SKProduct])
+    
 }
 
 // MARK: - RestoreHandlerDelegate
@@ -76,14 +77,14 @@ final class SubscriptionManager: NSObject {
             print("Store URL not configured.")
             return
         }
-
+        
         let receiptURL = Bundle.main.appStoreReceiptURL
         guard let receiptData = try? Data(contentsOf: receiptURL!) else {
             print("Receipt not found.")
             completion(.failure(NSError(domain: "ReceiptVerification", code: -1, userInfo: [NSLocalizedDescriptionKey: "Receipt not found."])))
             return
         }
-
+        
         verifyReceipt(receiptData: receiptData, storeURL: storeURL) { [weak self] result in
             switch result {
             case .success(let receiptInfo):
@@ -96,7 +97,7 @@ final class SubscriptionManager: NSObject {
             }
         }
     }
-
+    
     // MARK: - Verify Receipt with Enhanced Error Handling
     private func verifyReceipt(
         receiptData: Data,
@@ -111,21 +112,21 @@ final class SubscriptionManager: NSObject {
             "exclude-old-transactions": true
         ] as [String : Any]
         request.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
-
+        
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data, error == nil else {
                 completion(.failure(error ?? NSError(domain: "ReceiptVerification", code: -2, userInfo: [NSLocalizedDescriptionKey: "No response from server."])))
                 return
             }
-
+            
             do {
                 guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
                     completion(.failure(NSError(domain: "ReceiptVerification", code: -3, userInfo: [NSLocalizedDescriptionKey: "Invalid JSON response."])))
                     return
                 }
-
+                
                 print("Receipt JSON: \(json)")
-
+                
                 if let status = json["status"] as? Int {
                     if status == 21007 {
                         // Switch to sandbox URL and retry verification
@@ -146,8 +147,8 @@ final class SubscriptionManager: NSObject {
         }
         task.resume()
     }
-
-
+    
+    
     // MARK: - Helper to Handle Status Codes
     private func getErrorMessage(for status: Int) -> String {
         switch status {
@@ -162,32 +163,32 @@ final class SubscriptionManager: NSObject {
         default: return "Unknown error. Status code: \(status)"
         }
     }
-
+    
     // MARK: - Parse Subscription Info
-//    private func parseSubscriptionInfo(_ receiptInfo: [String: Any]) -> (Bool, Date?) {
-//        guard let latestReceiptInfo = receiptInfo["latest_receipt_info"] as? [[String: Any]] else {
-//            return (false, nil)
-//        }
-//
-//        // Assuming the most recent subscription is the last item in the array
-//        let lastTransaction = latestReceiptInfo.last
-//
-//        if let expiresDateMs = lastTransaction?["expires_date_ms"] as? String
-//            {
-//            let expiresDate = Date(timeIntervalSince1970: Double(expiresDateMs)! / 1000)
-//            let isSubscribed = expiresDate > Date() // Check if subscription is active
-//            return (isSubscribed, expiresDate)
-//        }
-//
-//        return (false, nil)
-//    }
+    //    private func parseSubscriptionInfo(_ receiptInfo: [String: Any]) -> (Bool, Date?) {
+    //        guard let latestReceiptInfo = receiptInfo["latest_receipt_info"] as? [[String: Any]] else {
+    //            return (false, nil)
+    //        }
+    //
+    //        // Assuming the most recent subscription is the last item in the array
+    //        let lastTransaction = latestReceiptInfo.last
+    //
+    //        if let expiresDateMs = lastTransaction?["expires_date_ms"] as? String
+    //            {
+    //            let expiresDate = Date(timeIntervalSince1970: Double(expiresDateMs)! / 1000)
+    //            let isSubscribed = expiresDate > Date() // Check if subscription is active
+    //            return (isSubscribed, expiresDate)
+    //        }
+    //
+    //        return (false, nil)
+    //    }
     
     // MARK: - Parse Subscription Info
     private func parseSubscriptionInfo(_ receiptInfo: [String: Any]) -> (Bool, Date?) {
         guard let latestReceiptInfo = receiptInfo["latest_receipt_info"] as? [[String: Any]] else {
             return (false, nil)
         }
-
+        
         // Check for a lifetime product and return a 100-year expiry date if found
         if latestReceiptInfo.contains(where: { transaction in
             if let productId = transaction["product_id"] as? String {
@@ -199,7 +200,7 @@ final class SubscriptionManager: NSObject {
             print("Lifetime product found. Expiry date set to \(lifetimeExpiryDate)")
             return (true, lifetimeExpiryDate)
         }
-
+        
         // Find the latest transaction with the highest expiry date
         let latestTransaction = latestReceiptInfo
             .compactMap { transaction -> (Date, Bool)? in
@@ -211,14 +212,14 @@ final class SubscriptionManager: NSObject {
                 return nil
             }
             .max(by: { $0.0 < $1.0 }) // Get the latest expiry date
-
+        
         guard let latest = latestTransaction else { return (false, nil) }
         return (latest.1, latest.0) // Return (isSubscribed, latestExpiryDate)
     }
-
-
-
-
+    
+    
+    
+    
 }
 
 // MARK: - SKProductsRequestDelegate
@@ -279,7 +280,7 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
             completion(nil)
         }
     }
-
+    
     
     public func sendReceiptToServer(receiptData: Data, completion: @escaping (Bool) -> Void) {
         // Your server URL
@@ -342,7 +343,7 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
             restoreDelegate?.didRestorePurchase(isPro: false, expiryDate: nil)
             return
         }
-
+        
         verifyReceipt(receiptData: receiptData, storeURL: storeURL!) { [weak self] result in
             DispatchQueue.main.async {
                 switch result {
@@ -352,17 +353,98 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
                     if expiryDate ?? Date() > Calendar.current.date(byAdding: .year, value: 10, to: Date())! {
                         print("Restored lifetime product. Expiry date: \(expiryDate!)")
                     }
-
+                    
                     self?.restoreDelegate?.didRestorePurchase(isPro: isSubscribed, expiryDate: expiryDate)
-
+                    
                 case .failure(let error):
                     self?.restoreDelegate?.didFailRestore(with: error)
                 }
             }
         }
     }
-
-
+    
+    func formattedPrice(for product: SKProduct) -> String {
+        print("Format Price: \(product.price)")
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = product.priceLocale
+        return formatter.string(from: product.price) ?? "\(product.price)"
+    }
+    
+    func subscriptionType(for product: SKProduct) -> String {
+        print("subscribeType: \(product.productIdentifier)")
+        let productId = product.productIdentifier.lowercased()
+        if productId.contains("yearly") {
+            return "Yearly"
+        } else if productId.contains("monthly") {
+            return "Monthly"
+        } else if productId.contains("weekly") {
+            return "Weekly"
+        } else if productId.contains("lifetime") {
+            return "Lifetime"
+        } else {
+            return "Subscription"
+        }
+    }
+    
+    func calculateDailyPrice(for product: SKProduct) -> String {
+        print("calculateDailyPrice: \(product.price)")
+        
+        let price = product.price.doubleValue
+        var period: Double = 1 // Default value
+        
+        if let subscriptionPeriod = product.subscriptionPeriod {
+            switch subscriptionPeriod.unit {
+            case .day:
+                period = Double(subscriptionPeriod.numberOfUnits)
+            case .week:
+                period = Double(subscriptionPeriod.numberOfUnits * 7)
+            case .month:
+                period = Double(subscriptionPeriod.numberOfUnits * 30)
+            case .year:
+                period = Double(subscriptionPeriod.numberOfUnits * 365)
+            @unknown default:
+                period = 1
+            }
+        }
+        
+        let dailyPrice = price / period
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.locale = product.priceLocale
+        if let formattedPrice = formatter.string(from: NSNumber(value: dailyPrice)) {
+            return "\(formattedPrice)/day"
+        } else {
+            return "\(dailyPrice)/day"
+        }
+    }
+    
+    func getFreeTrialDaysNumber(product: SKProduct) -> Int {
+        print("getFreeTrialDaysNumber: \(product.productIdentifier)")
+        if let introductoryPrice = product.introductoryPrice {
+            let trialPeriod = introductoryPrice.subscriptionPeriod
+            if trialPeriod.unit == .day {
+                print("Trial duration: \(trialPeriod.numberOfUnits) days")
+                return Int(trialPeriod.numberOfUnits)
+            } else if trialPeriod.unit == .week {
+                print("Trial duration: \(trialPeriod.numberOfUnits * 7) days")
+                return Int(trialPeriod.numberOfUnits * 7)
+            } else if trialPeriod.unit == .month {
+                print("Trial duration: \(trialPeriod.numberOfUnits * 30) days")
+                return Int(trialPeriod.numberOfUnits * 30)
+            } else if trialPeriod.unit == .year {
+                print("Trial duration: \(trialPeriod.numberOfUnits * 365) days")
+                return Int(trialPeriod.numberOfUnits * 365)
+            } else {
+                return 0
+            }
+        } else {
+            print("No free trial available for this product.")
+            return 0
+        }
+    }
+    
 }
 
 
@@ -374,33 +456,33 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //    public static let shared = SubscriptionManager()
 //    public static var sharedSecret = ""
 //    public static var endPoint = ""
-//    
-//    
+//
+//
 //    // Products
 //    public static var products: [SKProduct]?
 //
 //    //UI Update Delegate
 //    public var purchaseSuccessDelegate: PurchaseSuccessDelegate?
-//    
+//
 //    //Restore Delegate
 //    public var restorePurchasesDelegate: RestorePurchasesDelegate?
-//    
-//    
+//
+//
 //    private override init() {
 //        super.init()
 //        //Add it to purchase func to prevent unexpected purchase
 //        //SKPaymentQueue.default().add(self)
 //    }
-//    
+//
 //    deinit {
 //        SKPaymentQueue.default().remove(self)
 //    }
-//    
+//
 //    // MARK: - Product Request
 //    var productsRequest: SKProductsRequest?
 //    var availableProducts: [SKProduct] = []
 //    var productRequestCompletion: ((Result<[SKProduct], Error>) -> Void)?
-//    
+//
 //    public func fetchAvailableProducts(productIdentifiers: [String], completion: @escaping (Result<[SKProduct], Error>) -> Void) {
 //        self.productRequestCompletion = completion
 //        let productIdentifiers = Set(productIdentifiers)
@@ -431,7 +513,7 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //        SKPaymentQueue.default().add(self)
 //        SKPaymentQueue.default().add(payment)
 //    }
-//    
+//
 //    public func  checkSubscriptionStatus(completion: @escaping(_ isPro: Bool, _ expiryDate: Date) -> Void) {
 //        print("inside checkSubscriptionStatus")
 //        validateReceipt { isPro, subsExpiryDate in
@@ -439,8 +521,8 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //            completion(isPro, subsExpiryDate)
 //        }
 //    }
-//    
-//    
+//
+//
 //    public func fetchReceipt() -> Data? {
 //        if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
 //           FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
@@ -456,14 +538,14 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //        }
 //        return nil
 //    }
-//    
+//
 //
 //    public func fetchReceiptForFreeTrialCheck(completion: @escaping (Data?) -> Void) {
 //        guard let receiptURL = Bundle.main.appStoreReceiptURL else {
 //            completion(nil)
 //            return
 //        }
-//        
+//
 //        do {
 //            let receiptData = try Data(contentsOf: receiptURL)
 //            completion(receiptData)
@@ -472,31 +554,31 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //        }
 //    }
 //
-//    
+//
 //    public func sendReceiptToServer(receiptData: Data, completion: @escaping (Bool) -> Void) {
 //        // Your server URL
 //        let url = URL(string: SubscriptionManager.endPoint)!
-//        
+//
 //        var request = URLRequest(url: url)
 //        request.httpMethod = "POST"
 //        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-//        
+//
 //        let requestBody: [String: Any] = ["receipt-data": receiptData.base64EncodedString()]
 //        request.httpBody = try? JSONSerialization.data(withJSONObject: requestBody, options: [])
-//        
+//
 //        let task = URLSession.shared.dataTask(with: request) { data, response, error in
 //            guard let data = data, error == nil else {
 //                completion(false)
 //                return
 //            }
-//            
+//
 //            do {
 //                // Parse the JSON response
 //                if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
 //                    // Check for trial subscription in the receipt
 //                    if let receiptInfo = jsonResponse["receipt"] as? [String: Any],
 //                       let inApp = receiptInfo["in_app"] as? [[String: Any]] {
-//                        
+//
 //                        for purchase in inApp {
 //                            if let isTrialPeriod = purchase["is_trial_period"] as? String,
 //                               isTrialPeriod == "true" {
@@ -511,25 +593,25 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //                completion(false)
 //            }
 //        }
-//        
+//
 //        task.resume()
 //    }
 //
-//    
+//
 //    public func checkFreeTrialStatus(completion: @escaping (Bool) -> Void) {
 //        fetchReceiptForFreeTrialCheck { [self] receiptData in
 //            guard let receiptData = receiptData else {
 //                completion(false)
 //                return
 //            }
-//            
+//
 //            sendReceiptToServer(receiptData: receiptData) { hasUsedFreeTrial in
 //                completion(hasUsedFreeTrial)
 //            }
 //        }
 //    }
-//    
-//    
+//
+//
 //    public func validateReceipt(transaction: SKPaymentTransaction? = nil, completion: @escaping(_ isPro: Bool, _ expiryDate: Date) -> Void) {
 //        print("in validateReceipt")
 //        guard let receiptData = fetchReceipt() else {
@@ -594,7 +676,7 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //            do {
 //                if let jsonResponse = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any] {
 //                    //print("Receipt validation response: \(jsonResponse)")
-//                    
+//
 //                    // Debug: Log the full response
 ////                    if let jsonResponseString = String(data: try JSONSerialization.data(withJSONObject: jsonResponse, options: .prettyPrinted), encoding: .utf8) {
 ////                        print("Full receipt validation response: \(jsonResponseString)")
@@ -604,13 +686,13 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //                    let subscriptionStatus = self.checkSubscriptionStatus(receipt: jsonResponse)
 //                    DispatchQueue.main.async {
 //                        // Handle subscription status in the UI or app logic
-//                        
+//
 //                        if subscriptionStatus.0 {
 //                            print("Subscription is active")
 //                        } else {
 //                            print("Subscription is not active")
 //                        }
-//                        
+//
 //                        completion(subscriptionStatus.0, subscriptionStatus.1)
 //                    }
 //                }
@@ -622,7 +704,7 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //        task.resume()
 //    }
 //
-//    
+//
 //    public func checkSubscriptionStatus(receipt: [String: Any]) -> (Bool, Date) {
 //        guard let receiptInfo = receipt["latest_receipt_info"] as? [[String: Any]] else {
 //            print("No latest_receipt_info found in receipt")
@@ -745,20 +827,20 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //
 //        return false
 //    }
-//    
+//
 //    public func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
 //        print("in payment queue subs manager")
 //        for transaction in transactions {
 //            switch transaction.transactionState {
 //            case .purchased:
 //                validateReceipt(transaction: transaction) { [self] isPro, subsExpiryDate in
-//                    
+//
 //                    if let purchasedProduct = getProduct(from: transaction) {
-//                        
+//
 //                        purchaseSuccessDelegate?.purchaseSuccess(transaction: transaction, subscribedProduct: purchasedProduct, expireDate: subsExpiryDate)
 //
 //                    }
-//                    
+//
 //                    SKPaymentQueue.default().finishTransaction(transaction)
 //                    SKPaymentQueue.default().remove(self)
 //                }
@@ -775,17 +857,17 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 ////                   error.code != SKError.paymentCancelled.rawValue {
 ////                    print("Transaction Failed: \(error.localizedDescription)")
 ////                }
-//                
+//
 //                purchaseSuccessDelegate?.purchaseFailed(transaction: transaction, error: transaction.error)
 //                SKPaymentQueue.default().finishTransaction(transaction)
-//                
+//
 //                SKPaymentQueue.default().remove(self)
 //            default:
 //                break
 //            }
 //        }
 //    }
-//    
+//
 //    public  func getProduct(from transaction: SKPaymentTransaction) -> SKProduct? {
 //        guard let productIdentifier = transaction.payment.productIdentifier as String?,
 //              let product = availableProducts.first(where: { $0.productIdentifier == productIdentifier }) else {
@@ -793,7 +875,7 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //        }
 //        return product
 //    }
-//    
+//
 //    // MARK: - Restore Purchases
 //    public func restorePurchases() {
 //        SKPaymentQueue.default().add(self)
@@ -813,7 +895,7 @@ extension SubscriptionManager: SKPaymentTransactionObserver {
 //        self.restorePurchasesDelegate?.restorePurchasesFailed(error: error)
 //        SKPaymentQueue.default().remove(self)
 //    }
-//    
+//
 //}
 //
 //
