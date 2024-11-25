@@ -149,7 +149,7 @@ final class SubscriptionManager: NSObject {
     }
     
     
-    // MARK: - Helper to Handle Status Codes
+    // MARK: - Helper to Handle Status Codess
     private func getErrorMessage(for status: Int) -> String {
         switch status {
         case 21000: return "The App Store could not read the JSON object."
