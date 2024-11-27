@@ -126,7 +126,7 @@ final class SubscriptionManager: NSObject {
                     return
                 }
 
-                print("Receipt JSON: \(json)")
+                //print("Receipt JSON: \(json)")
 
                 if let status = json["status"] as? Int {
                     if status == 21007 {
